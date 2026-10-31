@@ -19,8 +19,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase (optional cloud sync) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -342,7 +340,6 @@
                     </div>
                 </div>
                 <button type="button" onclick="handleLogin(event)" class="btn btn-primary" style="width:100%;">Log in</button>
-                <button type="button" onclick="signInWithGoogle()" class="btn" style="width:100%;"><i class="fa-brands fa-google"></i> Continue with Google</button>
             </form>
             <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-3 hidden">
                 <div class="field"><label>Username</label><input type="text" id="signupUser" required></div>
@@ -382,7 +379,6 @@
                     </label>
                 </div>
                 <button type="button" onclick="handleSignup(event)" class="btn btn-primary" style="width:100%;">Create account</button>
-                <button type="button" onclick="signInWithGoogle()" class="btn" style="width:100%;"><i class="fa-brands fa-google"></i> Continue with Google</button>
             </form>
             <p class="auth-note">Accounts stored on this device. Cloud sync needs a backend.</p>
         </div>
@@ -529,7 +525,7 @@
     </main>
     <footer class="site-footer container">
         <div class="flex flex-wrap gap-3 items-center justify-between">
-            <span>NutriTrack · Business contact: support@nutritrack.app</span>
+            <span>NutriTrack · Business contact: mapssyph@gmail.com</span>
             <div class="flex gap-3">
                 <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a>
                 <a href="#" onclick="openLegal('terms');return false;">Terms of Service</a>
@@ -562,47 +558,9 @@
     </div>
 
 
-        <div class="modal">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="settingsTitle">Backend (Supabase)</h3>
-                <button onclick="closeSettings()" class="btn btn-ghost btn-sm icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="saveSettings(event)" class="space-y-3">
-                <div class="field"><label>Project URL</label><input type="url" id="sbUrl" placeholder="https://xxxx.supabase.co"></div>
-                <div class="field"><label>Anon public key</label><input type="text" id="sbKey" placeholder="eyJ..."></div>
-                <p class="text-xs text-muted">Create a free project at supabase.com, run the SQL in README, then paste URL + anon key here.</p>
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeSettings()" class="btn flex-1">Cancel</button>
-                    <button type="submit" class="btn btn-primary flex-1">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
 
-        <div class="modal">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="targetsTitle">Daily targets</h3>
-                <button onclick="closeTargetsModal()" class="btn btn-ghost btn-sm icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="saveTargets(event)" class="space-y-3">
-                <div class="form-grid">
-                    <div class="field"><label>Calories (kcal)</label><input type="number" id="targetCalsInput" min="500" max="10000" required></div>
-                    <div class="field"><label>Protein (g)</label><input type="number" id="targetProteinInput" min="0" max="500" required></div>
-                    <div class="field"><label>Carbs (g)</label><input type="number" id="targetCarbsInput" min="0" max="1000" required></div>
-                    <div class="field"><label>Fats (g)</label><input type="number" id="targetFatsInput" min="0" max="500" required></div>
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeTargetsModal()" class="btn flex-1">Cancel</button>
-                    <button type="submit" class="btn btn-primary flex-1">Save targets</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-
-
-        <div id="calculatorModal" class="modal-backdrop" onclick="if(event.target===this) closeCalculatorModal()" role="dialog" aria-modal="true" aria-labelledby="calcTitle">
+                <div id="calculatorModal" class="modal-backdrop" onclick="if(event.target===this) closeCalculatorModal()" role="dialog" aria-modal="true" aria-labelledby="calcTitle">
         <div class="modal">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="calcTitle" class="font-display text-lg font-bold">Daily goal & TDEE</h3>
@@ -1371,10 +1329,10 @@
         function logout() { localStorage.removeItem('nutri_current_user'); location.reload(); }
 
         const LEGAL_CONTENT = {
-            privacy: '<h4>Privacy Policy</h4><p>NutriTrack is an offline-first calorie and macro tracker. We collect only data needed to provide the service: account data you provide (username, email if supplied), nutrition logs, goals, custom foods, water and weight entries, and device storage required to run the app.</p><h4>Use</h4><p>To provide and improve the app. We do not sell your data and do not use it to train AI models without explicit consent.</p><h4>Storage and retention</h4><p>Data is stored on your device. Optional cloud sync stores data in your Supabase project. Daily log history retained up to 30 days on device. Delete all data any time.</p><h4>Sub-processors</h4><ul><li>Supabase (auth and optional cloud sync) under Supabase DPA.</li><li>CDN providers serving static assets (Tailwind, Font Awesome, Google Fonts).</li></ul><p>No advertising or analytics trackers.</p><h4>Your rights</h4><p>Access, export, or delete your data via "Your Data". Withdraw marketing consent any time.</p><h4>Children</h4><p>Not directed to children under 13; sign-up requires confirmation of age or parental consent.</p><h4>AI content</h4><p>No AI-generated content is presented as human content; no AI training on user data.</p><h4>Security/uptime</h4><p>Reasonable measures used; no 100% guarantee. Uptime best-effort, no SLA.</p><h4>Contact</h4><p>support@nutritrack.app</p>',
-            terms: '<h4>Terms of Service</h4><p>By using NutriTrack you agree. Personal, non-exclusive license for personal nutrition tracking. No misuse or reverse engineering. Free app: no subscriptions, auto-renewals, or hidden fees. Nutrition info is general guidance, not medical advice. Liability limited to maximum extent permitted by law. Terms may update; continued use is acceptance (recorded with timestamp).</p><h4>Contact</h4><p>support@nutritrack.app</p>',
-            refund: '<h4>Refund Policy</h4><p>NutriTrack is free. No paid plans, subscriptions, or in-app purchases, so no refunds apply. If this changes, refunds within 14 days and cancellable anytime. Contact: support@nutritrack.app</p>',
-            licenses: '<h4>Third-party licenses</h4><ul><li>Tailwind CSS - MIT.</li><li>Font Awesome free - icons CC BY 4.0, fonts SIL OFL 1.1, code MIT.</li><li>Google Fonts (Fraunces, Source Sans 3) - SIL OFL.</li><li>Supabase JS - Apache 2.0.</li></ul><p>DMCA notices: support@nutritrack.app.</p>'
+            privacy: '<h4>Privacy Policy</h4><p>NutriTrack is an offline-first calorie and macro tracker. We collect only data needed to provide the service: account data you provide (username, email if supplied), nutrition logs, goals, custom foods, water and weight entries, and device storage required to run the app.</p><h4>Use</h4><p>To provide and improve the app. We do not sell your data and do not use it to train AI models without explicit consent.</p><h4>Storage and retention</h4><p>Data is stored on your device. Daily log history retained up to 30 days on device. Delete all data any time.</p><h4>Sub-processors</h4><ul><li>CDN providers serving static assets (Tailwind, Font Awesome, Google Fonts).</li></ul><p>No advertising or analytics trackers.</p><h4>Your rights</h4><p>Access, export, or delete your data via "Your Data". Withdraw marketing consent any time.</p><h4>Children</h4><p>Not directed to children under 13; sign-up requires confirmation of age or parental consent.</p><h4>AI content</h4><p>No AI-generated content is presented as human content; no AI training on user data.</p><h4>Security/uptime</h4><p>Reasonable measures used; no 100% guarantee. Uptime best-effort, no SLA.</p><h4>Contact</h4><p>mapssyph@gmail.com</p>',
+            terms: '<h4>Terms of Service</h4><p>By using NutriTrack you agree. Personal, non-exclusive license for personal nutrition tracking. No misuse or reverse engineering. Free app: no subscriptions, auto-renewals, or hidden fees. Nutrition info is general guidance, not medical advice. Liability limited to maximum extent permitted by law. Terms may update; continued use is acceptance (recorded with timestamp).</p><h4>Contact</h4><p>mapssyph@gmail.com</p>',
+            refund: '<h4>Refund Policy</h4><p>NutriTrack is free. No paid plans, subscriptions, or in-app purchases, so no refunds apply. If this changes, refunds within 14 days and cancellable anytime. Contact: mapssyph@gmail.com</p>',
+            licenses: '<h4>Third-party licenses</h4><ul><li>Tailwind CSS - MIT.</li><li>Font Awesome free - icons CC BY 4.0, fonts SIL OFL 1.1, code MIT.</li><li>Google Fonts (Fraunces, Source Sans 3) - SIL OFL.</li></ul><p>DMCA notices: mapssyph@gmail.com.</p>'
         };
         function openLegal(key) {
             var titles = { privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund Policy', licenses: 'Licenses' };
@@ -1408,6 +1366,21 @@
         async function deleteMyData() {
             if (!confirm('Delete all your data? This cannot be undone.')) return;
             try {
+        function togglePass(id, btn) {
+            var input = document.getElementById(id);
+            if (!input) return;
+            if (input.type === 'password') { input.type = 'text'; btn.querySelector('i').className = 'fa-solid fa-eye-slash'; }
+            else { input.type = 'password'; btn.querySelector('i').className = 'fa-solid fa-eye'; }
+        }
+        function checkPassMatch() {
+            var p = document.getElementById('signupPass').value;
+            var p2 = document.getElementById('signupPass2').value;
+            var msg = document.getElementById('passMatchMsg');
+            if (!msg) return;
+            if (p2.length > 0 && p !== p2) msg.classList.remove('hidden');
+            else msg.classList.add('hidden');
+        }
+
                 var sb = (typeof getSB === 'function') ? getSB() : null;
                 if (sb) {
                     var res = await sb.auth.getUser();
@@ -1452,7 +1425,7 @@
     <!-- Consent banner -->
     <div id="consentBanner" class="consent-banner">
         <div class="container flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <p class="text-sm">We use local storage to run the app. Optional cloud sync (Supabase) only if you configure it. No advertising trackers. <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a></p>
+            <p class="text-sm">We use local storage to run the app. No cloud sync, no advertising trackers. <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a></p>
             <div class="flex gap-2">
                 <button class="btn btn-sm" onclick="setConsent('rejected')">Reject non-essential</button>
                 <button class="btn btn-sm btn-primary" onclick="setConsent('accepted')">Accept</button>
@@ -1495,6 +1468,5 @@
             </div>
         </div>
     </div>
-    <script src="./sb.js"></script>
 </body>
 </html>

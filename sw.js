@@ -1,14 +1,12 @@
 /* NutriTrack Offline - service worker */
-const CACHE_NAME = 'nutritrack-v3';
+const CACHE_NAME = 'nutritrack-v4';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
-  './sb.js',
   'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
 self.addEventListener('install', (event) => {
