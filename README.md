@@ -93,3 +93,4 @@ create policy "users update own" on public.user_data for update using (auth.uid(
 5. Sign up / log in. Data syncs to Supabase and pulls on login.
 
 Without Supabase configured, the app works fully offline with local accounts.
+
