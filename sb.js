@@ -64,46 +64,61 @@
             }
         }
         async function handleSignup(e) {
-            e.preventDefault();
-            const sb = getSB();
-            const u = document.getElementById('signupUser').value.trim();
-            const p = document.getElementById('signupPass').value;
-            const p2 = document.getElementById('signupPass2').value;
-            if (p.length < 6 || p.length > 12) { showToast('Password must be 6-12 characters.'); return; }
-            if (p !== p2) { showToast('Passwords do not match.'); return; }
-            if (sb) {
-                const email = u.includes('@') ? u : u + '@nutritrack.local';
-                const { error } = await sb.auth.signUp({ email, password: p, options: { emailRedirectTo: window.location.origin } });
-                if (error) { showToast(error.message); return; }
-                showToast('Account created. Check email if confirmation required.');
-                return;
-            }
-            // local fallback
-            const users = getUsers();
-            if (users[u]) { showToast('Username taken.'); return; }
-            users[u] = hashPass(p);
-            saveUsers(users);
-            localStorage.setItem('nutri_current_user', u);
-            enterApp();
-        }
-        async function handleLogin(e) {
-            e.preventDefault();
-            const sb = getSB();
-            const u = document.getElementById('loginUser').value.trim();
-            const p = document.getElementById('loginPass').value;
-            if (sb) {
-                const email = u.includes('@') ? u : u + '@nutritrack.local';
-                const { error } = await sb.auth.signInWithPassword({ email, password: p });
-                if (error) { showToast(error.message); return; }
+            if (e && e.preventDefault) e.preventDefault();
+            try {
+                const sb = getSB();
+                const u = document.getElementById('signupUser').value.trim();
+                const emailField = document.getElementById('signupEmail');
+                const emailInput = emailField ? emailField.value.trim() : '';
+                const p = document.getElementById('signupPass').value;
+                const p2 = document.getElementById('signupPass2').value;
+                if (p.length < 6 || p.length > 12) { showToast('Password must be 6-12 characters.'); return; }
+                if (p !== p2) { showToast('Passwords do not match.'); return; }
+                const email = emailInput || (u.includes('@') ? u : u + '@nutritrack.local');
+                if (sb) {
+                    const { error } = await sb.auth.signUp({ email, password: p, options: { emailRedirectTo: window.location.origin } });
+                    if (error) { showToast(error.message); return; }
+                    showToast('Account created. Check your email to confirm, then log in.');
+                    return;
+                }
+                // local fallback
+                const users = getUsers();
+                if (users[u]) { showToast('Username taken.'); return; }
+                users[u] = hashPass(p);
+                saveUsers(users);
+                try {
+                    const emails = JSON.parse(localStorage.getItem('nutri_user_emails') || '{}');
+                    emails[u] = email;
+                    localStorage.setItem('nutri_user_emails', JSON.stringify(emails));
+                } catch (err) {}
                 localStorage.setItem('nutri_current_user', u);
                 enterApp();
-                await pullState();
-                return;
+            } catch (err) {
+                showToast('Sign up failed: ' + (err && err.message ? err.message : err));
             }
-            const users = getUsers();
-            if (!users[u] || users[u] !== hashPass(p)) { showToast('Invalid credentials.'); return; }
-            localStorage.setItem('nutri_current_user', u);
-            enterApp();
+        }
+        async function handleLogin(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            try {
+                const sb = getSB();
+                const u = document.getElementById('loginUser').value.trim();
+                const p = document.getElementById('loginPass').value;
+                if (sb) {
+                    const email = u.includes('@') ? u : u + '@nutritrack.local';
+                    const { error } = await sb.auth.signInWithPassword({ email, password: p });
+                    if (error) { showToast(error.message); return; }
+                    localStorage.setItem('nutri_current_user', u);
+                    enterApp();
+                    await pullState();
+                    return;
+                }
+                const users = getUsers();
+                if (!users[u] || users[u] !== hashPass(p)) { showToast('Invalid credentials.'); return; }
+                localStorage.setItem('nutri_current_user', u);
+                enterApp();
+            } catch (err) {
+                showToast('Login failed: ' + (err && err.message ? err.message : err));
+            }
         }
         async function logout() {
             const sb = getSB();
@@ -130,18 +145,42 @@
         const _enterApp = enterApp;
         enterApp = async function() {
             _enterApp();
+            updateUserDisplay();
             await pullState();
         };
         // auto-login via Supabase session
         async function initAuth() {
             const sb = getSB();
+            // surface OAuth errors returned in the URL
+            try {
+                const qs = window.location.search || '';
+                const hash = window.location.hash || '';
+                const params = new URLSearchParams((qs + '&' + hash.replace(/^#/, '')).replace(/^&/, ''));
+                const err = params.get('error_description') || params.get('error');
+                if (err) showToast(decodeURIComponent(String(err).replace(/\+/g, ' ')));
+            } catch (e) {}
             if (sb) {
-                const { data: { session } } = await sb.auth.getSession();
-                if (session) { localStorage.setItem('nutri_current_user', session.user.email); enterApp(); return; }
+                try {
+                    if (window.location.search.includes('code=') && typeof sb.auth.exchangeCodeForSession === 'function') {
+                        await sb.auth.exchangeCodeForSession(window.location.href);
+                    }
+                    const { data: { session }, error } = await sb.auth.getSession();
+                    if (error) { console.error(error); showToast('Auth error: ' + error.message); }
+                    if (session) {
+                        localStorage.setItem('nutri_current_user', session.user.email);
+                        if (window.location.search || window.location.hash) {
+                            try { window.history.replaceState({}, document.title, window.location.pathname); } catch (e) {}
+                        }
+                        enterApp();
+                        return;
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showToast('Auth error: ' + (e && e.message ? e.message : e));
+                }
             }
             const u = localStorage.getItem('nutri_current_user');
             if (u && (getUsers()[u] || (sb && true))) {
-                // if supabase configured, require session; else local
                 if (!sb) enterApp();
                 else document.getElementById('authScreen').classList.remove('hidden');
             } else {
@@ -149,12 +188,32 @@
                 document.getElementById('appShell').classList.add('hidden');
             }
         }
-        // call initAuth instead of IIFE
+        window.handleLogin = handleLogin;
+        window.handleSignup = handleSignup;
+        window.signInWithGoogle = signInWithGoogle;
 
         async function signInWithGoogle() {
             const sb = getSB();
-            if (!sb) { showToast('Configure Supabase in Settings first.'); return; }
-            await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+            if (!sb) { showToast('Configure Supabase in Settings to use Google sign-in.'); try { openSettings(); } catch (e) {} return; }
+            try {
+                const { data, error } = await sb.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: window.location.origin, queryParams: { access_type: 'offline', prompt: 'consent' } }
+                });
+                if (error) {
+                    const msg = (error.message || '').toLowerCase();
+                    if (msg.includes('unsupported provider') || msg.includes('provider is not enabled')) {
+                        showToast('Google sign-in is not enabled in your Supabase project. Enable Google under Authentication → Providers in Supabase.');
+                    } else {
+                        showToast('Google sign-in failed: ' + error.message);
+                    }
+                    return;
+                }
+                if (data && data.url) { window.location.assign(data.url); return; }
+                if (!data || !data.url) { showToast('Google sign-in did not start. Check Supabase Google provider settings.'); }
+            } catch (e) {
+                showToast('Google sign-in error: ' + (e && e.message ? e.message : e));
+            }
         }
 
 (function(){ try { initAuth(); } catch(e){} })();

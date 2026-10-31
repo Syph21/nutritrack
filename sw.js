@@ -1,5 +1,5 @@
 /* NutriTrack Offline - service worker */
-const CACHE_NAME = 'nutritrack-v2';
+const CACHE_NAME = 'nutritrack-v3';
 const ASSETS = [
   './',
   './index.html',
