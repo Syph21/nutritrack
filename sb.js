@@ -111,6 +111,21 @@
             localStorage.removeItem('nutri_current_user');
             location.reload();
         }
+
+        function togglePass(id, btn) {
+            const input = document.getElementById(id);
+            if (!input) return;
+            if (input.type === 'password') { input.type = 'text'; btn.querySelector('i').className = 'fa-solid fa-eye-slash'; }
+            else { input.type = 'password'; btn.querySelector('i').className = 'fa-solid fa-eye'; }
+        }
+        function checkPassMatch() {
+            const p = document.getElementById('signupPass').value;
+            const p2 = document.getElementById('signupPass2').value;
+            const msg = document.getElementById('passMatchMsg');
+            if (!msg) return;
+            if (p2.length > 0 && p !== p2) msg.classList.remove('hidden');
+            else msg.classList.add('hidden');
+        }
         // override enterApp to also pull state
         const _enterApp = enterApp;
         enterApp = async function() {
