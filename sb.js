@@ -72,12 +72,19 @@
                 const emailInput = emailField ? emailField.value.trim() : '';
                 const p = document.getElementById('signupPass').value;
                 const p2 = document.getElementById('signupPass2').value;
+                const acceptTerms = document.getElementById('signupAcceptTerms');
+                const ageConfirm = document.getElementById('signupAgeConfirm');
+                if (!acceptTerms || !acceptTerms.checked) { showToast('You must accept the Terms and Privacy Policy.'); return; }
+                if (!ageConfirm || !ageConfirm.checked) { showToast('You must confirm you are at least 13 years old.'); return; }
+                const marketingEl = document.getElementById('signupMarketingConsent');
+                const marketingConsent = !!(marketingEl && marketingEl.checked);
                 if (p.length < 6 || p.length > 12) { showToast('Password must be 6-12 characters.'); return; }
                 if (p !== p2) { showToast('Passwords do not match.'); return; }
                 const email = emailInput || (u.includes('@') ? u : u + '@nutritrack.local');
                 if (sb) {
                     const { error } = await sb.auth.signUp({ email, password: p, options: { emailRedirectTo: window.location.origin } });
                     if (error) { showToast(error.message); return; }
+                    localStorage.setItem('nutri_terms_accepted', JSON.stringify({ version: '2026-01', timestamp: new Date().toISOString(), marketing: marketingConsent }));
                     showToast('Account created. Check your email to confirm, then log in.');
                     return;
                 }
@@ -91,6 +98,7 @@
                     emails[u] = email;
                     localStorage.setItem('nutri_user_emails', JSON.stringify(emails));
                 } catch (err) {}
+                localStorage.setItem('nutri_terms_accepted', JSON.stringify({ version: '2026-01', timestamp: new Date().toISOString(), marketing: marketingConsent }));
                 localStorage.setItem('nutri_current_user', u);
                 enterApp();
             } catch (err) {

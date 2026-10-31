@@ -304,11 +304,21 @@
         .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
         .auth-tabs button { flex: 1; min-height: 40px; border: 1px solid var(--border); background: var(--surface-2); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; }
         .auth-tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .auth-note { font-size: 11px; color: var(--muted); margin-top: 12px; text-align: center; }
+        .skip-link { position: absolute; left: -9999px; top: 0; background: var(--accent); color: #fff; padding: 8px 12px; z-index: 1000; border-radius: var(--radius-sm); }
+        .skip-link:focus { left: 8px; top: 8px; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .consent-banner { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--border); padding: var(--space-4); z-index: 200; display: none; }
+        .consent-banner.open { display: block; }
+        .legal-modal-body { max-height: 60vh; overflow: auto; font-size: 13px; line-height: 1.6; }
+        .legal-modal-body h4 { font-family: var(--font-display); font-size: 16px; margin: 12px 0 4px; }
+        .legal-modal-body p { margin: 0 0 8px; }
+        .legal-modal-body ul { margin: 0 0 8px 18px; }
+        footer.site-footer { border-top: 1px solid var(--border); margin-top: var(--space-6); padding: var(--space-4) 0; font-size: 12px; color: var(--muted); }
+        footer.site-footer a { color: var(--muted); text-decoration: underline; }
     </style>
-
 </head>
 <body class="min-h-screen flex flex-col antialiased">
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
 
     <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
@@ -353,6 +363,24 @@
                     </div>
                     <p id="passMatchMsg" class="text-xs text-danger mt-1 hidden"><i class="fa-solid fa-triangle-exclamation"></i> Passwords do not match</p>
                 </div>
+                <div class="field">
+                    <label class="flex items-start gap-2 text-xs">
+                        <input type="checkbox" id="signupAcceptTerms" required>
+                        <span>I agree to the <a href="#" onclick="openLegal('terms');return false;">Terms of Service</a> and <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a>.</span>
+                    </label>
+                </div>
+                <div class="field">
+                    <label class="flex items-start gap-2 text-xs">
+                        <input type="checkbox" id="signupAgeConfirm" required>
+                        <span>I am at least 13 years old (or have parental consent).</span>
+                    </label>
+                </div>
+                <div class="field">
+                    <label class="flex items-start gap-2 text-xs">
+                        <input type="checkbox" id="signupMarketingConsent">
+                        <span>I consent to receive marketing emails (optional).</span>
+                    </label>
+                </div>
                 <button type="button" onclick="handleSignup(event)" class="btn btn-primary" style="width:100%;">Create account</button>
                 <button type="button" onclick="signInWithGoogle()" class="btn" style="width:100%;"><i class="fa-brands fa-google"></i> Continue with Google</button>
             </form>
@@ -383,7 +411,7 @@
         </div>
     </header>
 
-    <main class="container">
+    <main id="mainContent" class="container">
         <div class="panel summary">
             <div class="flex items-center justify-between gap-2 mb-4">
                 <button onclick="shiftDate(-1)" class="btn btn-sm icon-btn" aria-label="Previous day"><i class="fa-solid fa-chevron-left"></i></button>
@@ -499,6 +527,18 @@
     <div class="panel"><h2 class="section-title">Last 7 days</h2><canvas id="weekChart" width="600" height="120"></canvas></div>
 
     </main>
+    <footer class="site-footer container">
+        <div class="flex flex-wrap gap-3 items-center justify-between">
+            <span>NutriTrack · Business contact: support@nutritrack.app</span>
+            <div class="flex gap-3">
+                <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a>
+                <a href="#" onclick="openLegal('terms');return false;">Terms of Service</a>
+                <a href="#" onclick="openLegal('refund');return false;">Refund Policy</a>
+                <a href="#" onclick="openLegal('licenses');return false;">Licenses</a>
+                <a href="#" onclick="openDataControls();return false;">Your Data</a>
+            </div>
+        </div>
+    </footer>
 
     <div id="targetsModal" class="modal-backdrop" onclick="if(event.target===this) closeTargetsModal()" role="dialog" aria-modal="true" aria-labelledby="targetsTitle">
         <div class="modal">
@@ -1268,6 +1308,12 @@
                 const email = emailEl ? emailEl.value.trim() : '';
                 const p = document.getElementById('signupPass').value;
                 const p2 = document.getElementById('signupPass2').value;
+                const acceptTerms = document.getElementById('signupAcceptTerms');
+                const ageConfirm = document.getElementById('signupAgeConfirm');
+                if (!acceptTerms || !acceptTerms.checked) { showToast('You must accept the Terms and Privacy Policy.'); return; }
+                if (!ageConfirm || !ageConfirm.checked) { showToast('You must confirm you are at least 13 years old.'); return; }
+                const marketingEl = document.getElementById('signupMarketingConsent');
+                const marketingConsent = !!(marketingEl && marketingEl.checked);
                 if (p !== p2) { showToast('Passwords do not match.'); return; }
                 const users = getUsers();
                 if (users[u]) { showToast('Username taken.'); return; }
@@ -1280,6 +1326,7 @@
                         localStorage.setItem('nutri_user_emails', JSON.stringify(emails));
                     } catch (err) {}
                 }
+                localStorage.setItem('nutri_terms_accepted', JSON.stringify({ version: '2026-01', timestamp: new Date().toISOString(), marketing: marketingConsent }));
                 localStorage.setItem('nutri_current_user', u);
                 enterApp();
             } catch (err) {
@@ -1323,6 +1370,71 @@
         }
         function logout() { localStorage.removeItem('nutri_current_user'); location.reload(); }
 
+        const LEGAL_CONTENT = {
+            privacy: '<h4>Privacy Policy</h4><p>NutriTrack is an offline-first calorie and macro tracker. We collect only data needed to provide the service: account data you provide (username, email if supplied), nutrition logs, goals, custom foods, water and weight entries, and device storage required to run the app.</p><h4>Use</h4><p>To provide and improve the app. We do not sell your data and do not use it to train AI models without explicit consent.</p><h4>Storage and retention</h4><p>Data is stored on your device. Optional cloud sync stores data in your Supabase project. Daily log history retained up to 30 days on device. Delete all data any time.</p><h4>Sub-processors</h4><ul><li>Supabase (auth and optional cloud sync) under Supabase DPA.</li><li>CDN providers serving static assets (Tailwind, Font Awesome, Google Fonts).</li></ul><p>No advertising or analytics trackers.</p><h4>Your rights</h4><p>Access, export, or delete your data via "Your Data". Withdraw marketing consent any time.</p><h4>Children</h4><p>Not directed to children under 13; sign-up requires confirmation of age or parental consent.</p><h4>AI content</h4><p>No AI-generated content is presented as human content; no AI training on user data.</p><h4>Security/uptime</h4><p>Reasonable measures used; no 100% guarantee. Uptime best-effort, no SLA.</p><h4>Contact</h4><p>support@nutritrack.app</p>',
+            terms: '<h4>Terms of Service</h4><p>By using NutriTrack you agree. Personal, non-exclusive license for personal nutrition tracking. No misuse or reverse engineering. Free app: no subscriptions, auto-renewals, or hidden fees. Nutrition info is general guidance, not medical advice. Liability limited to maximum extent permitted by law. Terms may update; continued use is acceptance (recorded with timestamp).</p><h4>Contact</h4><p>support@nutritrack.app</p>',
+            refund: '<h4>Refund Policy</h4><p>NutriTrack is free. No paid plans, subscriptions, or in-app purchases, so no refunds apply. If this changes, refunds within 14 days and cancellable anytime. Contact: support@nutritrack.app</p>',
+            licenses: '<h4>Third-party licenses</h4><ul><li>Tailwind CSS - MIT.</li><li>Font Awesome free - icons CC BY 4.0, fonts SIL OFL 1.1, code MIT.</li><li>Google Fonts (Fraunces, Source Sans 3) - SIL OFL.</li><li>Supabase JS - Apache 2.0.</li></ul><p>DMCA notices: support@nutritrack.app.</p>'
+        };
+        function openLegal(key) {
+            var titles = { privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund Policy', licenses: 'Licenses' };
+            document.getElementById('legalTitle').textContent = titles[key] || 'Legal';
+            document.getElementById('legalBody').innerHTML = LEGAL_CONTENT[key] || '';
+            document.getElementById('legalModal').classList.add('open');
+        }
+        function closeLegal() { document.getElementById('legalModal').classList.remove('open'); }
+        function openDataControls() {
+            var cb = document.getElementById('marketingUnsubscribe');
+            if (cb) cb.checked = (localStorage.getItem('nutri_marketing_consent') === 'false');
+            document.getElementById('dataModal').classList.add('open');
+        }
+        function closeDataControls() { document.getElementById('dataModal').classList.remove('open'); }
+        function setConsent(choice) {
+            localStorage.setItem('nutri_consent', choice);
+            document.getElementById('consentBanner').classList.remove('open');
+        }
+        function downloadMyData() {
+            var data = {};
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k && k.indexOf('nutri_') === 0) data[k] = localStorage.getItem(k);
+            }
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = 'nutritrack-data.json'; a.click();
+            URL.revokeObjectURL(url);
+        }
+        async function deleteMyData() {
+            if (!confirm('Delete all your data? This cannot be undone.')) return;
+            try {
+                var sb = (typeof getSB === 'function') ? getSB() : null;
+                if (sb) {
+                    var res = await sb.auth.getUser();
+                    if (res && res.data && res.data.user) await sb.from('user_data').delete().eq('user_id', res.data.user.id);
+                    await sb.auth.signOut();
+                }
+            } catch (e) {}
+            var keys = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k && k.indexOf('nutri_') === 0) keys.push(k);
+            }
+            keys.forEach(function (k) { localStorage.removeItem(k); });
+            location.reload();
+        }
+        function saveMarketingPreference() {
+            var cb = document.getElementById('marketingUnsubscribe');
+            localStorage.setItem('nutri_marketing_consent', cb && cb.checked ? 'false' : 'true');
+            showToast('Preference saved.');
+        }
+        (function initConsent() {
+            if (!localStorage.getItem('nutri_consent')) document.getElementById('consentBanner').classList.add('open');
+        })();
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.open').forEach(function (m) { m.classList.remove('open'); });
+        });
+
         // Auto-login on load
         (function initAuth() {
             const u = localStorage.getItem('nutri_current_user');
@@ -1337,6 +1449,52 @@
 
     
 </script>
+    <!-- Consent banner -->
+    <div id="consentBanner" class="consent-banner">
+        <div class="container flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <p class="text-sm">We use local storage to run the app. Optional cloud sync (Supabase) only if you configure it. No advertising trackers. <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a></p>
+            <div class="flex gap-2">
+                <button class="btn btn-sm" onclick="setConsent('rejected')">Reject non-essential</button>
+                <button class="btn btn-sm btn-primary" onclick="setConsent('accepted')">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legal modal -->
+    <div id="legalModal" class="modal-backdrop" onclick="if(event.target===this) closeLegal()" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="legalTitle">Legal</h3>
+                <button onclick="closeLegal()" class="btn btn-ghost btn-sm icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="legalBody" class="legal-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Data controls modal -->
+    <div id="dataModal" class="modal-backdrop" onclick="if(event.target===this) closeDataControls()" role="dialog" aria-modal="true" aria-labelledby="dataTitle">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="dataTitle">Your data</h3>
+                <button onclick="closeDataControls()" class="btn btn-ghost btn-sm icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <p>Download a copy of the data stored on this device, or delete it. Cloud data (if configured) is also removed.</p>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-primary" onclick="downloadMyData()">Download my data (JSON)</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteMyData()">Delete all my data</button>
+                </div>
+                <div class="field">
+                    <label class="flex items-start gap-2 text-xs">
+                        <input type="checkbox" id="marketingUnsubscribe">
+                        <span>Unsubscribe from marketing emails</span>
+                    </label>
+                </div>
+                <button class="btn btn-sm" onclick="saveMarketingPreference()">Save preference</button>
+                <p class="text-xs text-muted">Data retention: daily logs are kept up to 30 days of history on this device. You can delete everything at any time.</p>
+            </div>
+        </div>
+    </div>
     <script src="./sb.js"></script>
 </body>
 </html>
