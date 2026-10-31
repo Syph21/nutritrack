@@ -1,20 +1,26 @@
+import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
+import * as WebBrowser from 'expo-web-browser';
 
-// Point this at your deployed PWA URL (GitHub Pages / Netlify / Vercel).
 const APP_URL = 'https://syph21.github.io/nutritrack/';
 
 export default function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    WebBrowser.openBrowserAsync(APP_URL).finally(() => setLoading(false));
+  }, []);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <WebView source={{ uri: APP_URL }} style={styles.webview} />
+    <View style={styles.container}>
+      {loading ? <ActivityIndicator size="large" color="#b8421a" /> : <Text style={styles.text}>NutriTrack opened in browser.</Text>}
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f4f1ea' },
-  webview: { flex: 1 },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f4f1ea' },
+  text: { marginTop: 16, color: '#1c1916', fontSize: 16 },
 });
