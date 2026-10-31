@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://syph21.github.io/nutritrack/sitemap.xml

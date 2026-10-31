@@ -11,7 +11,28 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
     <title>NutriTrack Offline - Calorie & Macro Tracker</title>
+    <meta name="description" content="NutriTrack is a free offline-first calorie and macro tracker. Log meals, water, and weight. No account required.">
+    <link rel="canonical" href="https://syph21.github.io/nutritrack/">
+    <meta property="og:title" content="NutriTrack Offline - Calorie & Macro Tracker">
+    <meta property="og:description" content="Free offline-first calorie and macro tracker. Log meals, water, and weight.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://syph21.github.io/nutritrack/">
+    <meta property="og:image" content="https://syph21.github.io/nutritrack/icon.svg">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="NutriTrack Offline - Calorie & Macro Tracker">
+    <meta name="twitter:description" content="Free offline-first calorie and macro tracker.">
     <link rel="icon" type="image/svg+xml" href="./icon.svg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "NutriTrack",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Web",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "Offline-first calorie and macro tracker."
+    }
+    </script>
     <link rel="apple-touch-icon" href="./icon.svg">
     <link rel="manifest" href="./manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -339,6 +360,7 @@
                         <button type="button" onclick="togglePass('loginPass', this)" class="btn btn-sm icon-btn" aria-label="Show password"><i class="fa-solid fa-eye"></i></button>
                     </div>
                 </div>
+                <p id="loginError" class="text-xs text-danger mt-1 hidden">Invalid username or password.</p>
                 <button type="button" onclick="handleLogin(event)" class="btn btn-primary" style="width:100%;">Log in</button>
             </form>
             <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-3 hidden">
@@ -407,6 +429,13 @@
         </div>
     </header>
 
+    <nav aria-label="Breadcrumb" class="container text-xs text-muted" style="padding-top:8px;">
+        <ol style="list-style:none;padding:0;margin:0;display:flex;gap:6px;">
+            <li><a href="/">Home</a></li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">Tracker</li>
+        </ol>
+    </nav>
     <main id="mainContent" class="container">
         <div class="panel summary">
             <div class="flex items-center justify-between gap-2 mb-4">
@@ -1297,7 +1326,13 @@
                 const u = document.getElementById('loginUser').value.trim();
                 const p = document.getElementById('loginPass').value;
                 const users = getUsers();
-                if (!users[u] || users[u] !== hashPass(p)) { showToast('Invalid credentials.'); return; }
+                const errEl = document.getElementById('loginError');
+                if (!users[u] || users[u] !== hashPass(p)) {
+                    if (errEl) errEl.classList.remove('hidden');
+                    showToast('Invalid username or password.');
+                    return;
+                }
+                if (errEl) errEl.classList.add('hidden');
                 localStorage.setItem('nutri_current_user', u);
                 enterApp();
             } catch (err) {
@@ -1363,9 +1398,6 @@
             a.href = url; a.download = 'nutritrack-data.json'; a.click();
             URL.revokeObjectURL(url);
         }
-        async function deleteMyData() {
-            if (!confirm('Delete all your data? This cannot be undone.')) return;
-            try {
         function togglePass(id, btn) {
             var input = document.getElementById(id);
             if (!input) return;
@@ -1380,14 +1412,8 @@
             if (p2.length > 0 && p !== p2) msg.classList.remove('hidden');
             else msg.classList.add('hidden');
         }
-
-                var sb = (typeof getSB === 'function') ? getSB() : null;
-                if (sb) {
-                    var res = await sb.auth.getUser();
-                    if (res && res.data && res.data.user) await sb.from('user_data').delete().eq('user_id', res.data.user.id);
-                    await sb.auth.signOut();
-                }
-            } catch (e) {}
+        async function deleteMyData() {
+            if (!confirm('Delete all your data? This cannot be undone.')) return;
             var keys = [];
             for (var i = 0; i < localStorage.length; i++) {
                 var k = localStorage.key(i);

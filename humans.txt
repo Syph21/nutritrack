@@ -1,0 +1,10 @@
+/* TEAM */
+Developer: NutriTrack
+Contact: mapssyph@gmail.com
+Site: https://syph21.github.io/nutritrack/
+
+/* SITE */
+Last update: 2026-10-31
+Language: English
+Doctype: HTML5
+IDE: VS Code
