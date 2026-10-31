@@ -1,0 +1,19 @@
+{
+  "name": "NutriTrack Offline",
+  "short_name": "NutriTrack",
+  "description": "NutriTrack - a personal calorie and macro tracker.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f1ea",
+  "theme_color": "#b8421a",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Log Food", "short_name": "Log", "url": "./index.html#log", "icons": [{ "src": "icon.svg", "sizes": "any" }] },
+    { "name": "Set Goals", "short_name": "Goals", "url": "./index.html#goals", "icons": [{ "src": "icon.svg", "sizes": "any" }] }
+  ]
+}
