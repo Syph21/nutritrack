@@ -166,10 +166,54 @@
 
         // ---------- Barcode lookup (Open Food Facts) ----------
         async function scanBarcode() {
-            const manual = prompt('Enter barcode (or use camera if supported):');
-            if (!manual) return;
+            document.getElementById('barcodeModal').classList.add('open');
+            document.getElementById('barcodeStatus').textContent = 'Starting camera…';
+            const video = document.getElementById('barcodeVideo');
+            if (window.BarcodeDetector) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    video.srcObject = stream;
+                    await video.play();
+                    const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code'] });
+                    document.getElementById('barcodeStatus').textContent = 'Point camera at a barcode…';
+                    const scanLoop = async () => {
+                        if (!video.srcObject) return;
+                        try {
+                            const codes = await detector.detect(video);
+                            if (codes && codes.length) {
+                                const code = codes[0].rawValue;
+                                document.getElementById('barcodeStatus').textContent = 'Found: ' + code;
+                                stopBarcodeCamera();
+                                await lookupBarcode(code);
+                                return;
+                            }
+                        } catch (e) {}
+                        requestAnimationFrame(scanLoop);
+                    };
+                    requestAnimationFrame(scanLoop);
+                } catch (e) {
+                    document.getElementById('barcodeStatus').textContent = 'Camera unavailable. Enter barcode manually.';
+                }
+            } else {
+                document.getElementById('barcodeStatus').textContent = 'Camera scanning not supported in this browser. Enter barcode manually.';
+            }
+        }
+        function stopBarcodeCamera() {
+            const video = document.getElementById('barcodeVideo');
+            if (video && video.srcObject) {
+                video.srcObject.getTracks().forEach(t => t.stop());
+                video.srcObject = null;
+            }
+        }
+        function closeBarcode() {
+            stopBarcodeCamera();
+            document.getElementById('barcodeModal').classList.remove('open');
+        }
+        async function lookupBarcode(code) {
+            code = (code || '').trim();
+            if (!code) { showToast('Enter a barcode.'); return; }
             try {
-                const res = await fetch('https://world.openfoodfacts.org/api/v0/product/' + encodeURIComponent(manual) + '.json');
+                const res = await fetch('https://world.openfoodfacts.org/api/v0/product/' + encodeURIComponent(code) + '.json');
                 const data = await res.json();
                 if (data && data.product) {
                     const p = data.product;
@@ -186,6 +230,7 @@
                     localFoods.push(item);
                     renderFoodDatabase(document.getElementById('foodSearchInput').value);
                     showToast('Added ' + name);
+                    closeBarcode();
                 } else {
                     showToast('Product not found.');
                 }
@@ -1452,7 +1497,27 @@ const ALL_FOOD_DB=DEFAULT_FOOD_DB.concat(GENERATED_FOOD_DB);
 
     
 </script>
-    <!-- Consent banner -->
+    <!-- Barcode modal -->
+    <div id="barcodeModal" class="modal-backdrop" onclick="if(event.target===this) closeBarcode()" role="dialog" aria-modal="true" aria-labelledby="barcodeTitle">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="barcodeTitle">Scan barcode</h3>
+                <button onclick="closeBarcode()" class="btn btn-ghost btn-sm icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <video id="barcodeVideo" autoplay playsinline style="width:100%;border-radius:8px;background:#000;"></video>
+                <p id="barcodeStatus" class="text-xs text-muted">Starting camera…</p>
+                <div class="field">
+                    <label>Or enter barcode manually</label>
+                    <input type="text" id="barcodeManual" placeholder="e.g. 3017620422003">
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-sm btn-primary flex-1" onclick="lookupBarcode(document.getElementById('barcodeManual').value)">Look up</button>
+                    <button class="btn btn-sm flex-1" onclick="closeBarcode()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="consentBanner" class="consent-banner">
         <div class="container flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
             <p class="text-sm">We use local storage to run the app. No cloud sync, no advertising trackers. <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a></p>
