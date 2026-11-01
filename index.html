@@ -445,6 +445,7 @@ async function lookupBarcode(code) {
             <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-3 hidden">
                 <div class="field"><label>Username</label><input type="text" id="signupUser" required></div>
                 <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com"></div>
+                <p id="signupEmailError" class="text-xs text-danger mt-1 hidden">Email is not valid. Email must contain .com</p>
                 <div class="field">
                     <label>Password</label>
                     <div class="flex gap-2">
@@ -464,7 +465,7 @@ async function lookupBarcode(code) {
                 <div class="field">
                     <label class="flex items-start gap-2 text-xs">
                         <input type="checkbox" id="signupAcceptTerms" required>
-                        <span>I agree to the <a href="#" onclick="openLegal('terms');return false;">Terms of Service</a> and <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a>.</span>
+                        <span>I agree to the <a href="#" onclick="openLegal('terms');return false;" style="font-weight:700;text-decoration:underline;">Terms of Service</a> and <a href="#" onclick="openLegal('privacy');return false;" style="font-weight:700;text-decoration:underline;">Privacy Policy</a>.</span>
                     </label>
                 </div>
                 <button type="button" onclick="handleSignup(event)" class="btn btn-primary" style="width:100%;">Create account</button>
@@ -623,8 +624,8 @@ async function lookupBarcode(code) {
         <div class="flex flex-wrap gap-3 items-center justify-between">
             <span>NutriTrack · Business contact: mapssyph@gmail.com</span>
             <div class="flex gap-3">
-                <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a>
-                <a href="#" onclick="openLegal('terms');return false;">Terms of Service</a>
+                <a href="#" onclick="openLegal('privacy');return false;" style="font-weight:700;text-decoration:underline;">Privacy Policy</a>
+                <a href="#" onclick="openLegal('terms');return false;" style="font-weight:700;text-decoration:underline;">Terms of Service</a>
                 <a href="#" onclick="openLegal('refund');return false;">Refund Policy</a>
                 <a href="#" onclick="openLegal('licenses');return false;">Licenses</a>
                 <a href="#" onclick="openDataControls();return false;">Your Data</a>
@@ -1370,7 +1371,14 @@ const ALL_FOOD_DB=DEFAULT_FOOD_DB.concat(GENERATED_FOOD_DB);
                 if (!acceptTerms || !acceptTerms.checked) { showToast('You must accept the Terms and Privacy Policy.'); return; }
                 if (p.length < 6 || p.length > 12) { showToast('Password must be 6-12 characters.'); return; }
                 if (p !== p2) { showToast('Passwords do not match.'); return; }
-                if (!email || !email.includes('@') || !email.toLowerCase().endsWith('.com')) { showToast('Please enter a valid email (e.g. name@gmail.com).'); return; }
+                if (!email || !email.includes('@') || !email.toLowerCase().endsWith('.com')) { 
+                    const eEl = document.getElementById('signupEmailError');
+                    if (eEl) eEl.classList.remove('hidden');
+                    showToast('Email is not valid. Email must contain .com'); 
+                    return; 
+                }
+                const eEl2 = document.getElementById('signupEmailError');
+                if (eEl2) eEl2.classList.add('hidden');
                 const users = getUsers();
                 if (users[u]) { showToast('Username taken.'); return; }
                 users[u] = hashPass(p);
@@ -1540,7 +1548,7 @@ const ALL_FOOD_DB=DEFAULT_FOOD_DB.concat(GENERATED_FOOD_DB);
     </div>
     <div id="consentBanner" class="consent-banner">
         <div class="container flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <p class="text-sm">We use local storage to run the app. No cloud sync, no advertising trackers. <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a></p>
+            <p class="text-sm">We use local storage to run the app. No cloud sync, no advertising trackers. <a href="#" onclick="openLegal('privacy');return false;" style="font-weight:700;text-decoration:underline;">Privacy Policy</a></p>
             <div class="flex gap-2">
                 <button class="btn btn-sm" onclick="setConsent('rejected')">Reject non-essential</button>
                 <button class="btn btn-sm btn-primary" onclick="setConsent('accepted')">Accept</button>
