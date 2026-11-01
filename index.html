@@ -169,14 +169,21 @@
             document.getElementById('barcodeModal').classList.add('open');
             document.getElementById('barcodeStatus').textContent = 'Starting camera…';
             const video = document.getElementById('barcodeVideo');
+            let stream = null;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                await video.play();
+            } catch (e) {
+                document.getElementById('barcodeStatus').textContent = 'Camera unavailable. Enter barcode manually.';
+                return;
+            }
+            // Try native BarcodeDetector first (Chrome/Edge/Android)
             if (window.BarcodeDetector) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    video.srcObject = stream;
-                    await video.play();
                     const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code'] });
                     document.getElementById('barcodeStatus').textContent = 'Point camera at a barcode…';
-                    const scanLoop = async () => {
+                    const loop = async () => {
                         if (!video.srcObject) return;
                         try {
                             const codes = await detector.detect(video);
@@ -188,14 +195,41 @@
                                 return;
                             }
                         } catch (e) {}
-                        requestAnimationFrame(scanLoop);
+                        requestAnimationFrame(loop);
                     };
-                    requestAnimationFrame(scanLoop);
+                    requestAnimationFrame(loop);
+                    return;
+                } catch (e) {}
+            }
+            // Fallback for Safari/iOS: load ZXing from CDN
+            document.getElementById('barcodeStatus').textContent = 'Loading scanner…';
+            if (!window.ZXing) {
+                await new Promise((resolve, reject) => {
+                    const sc = document.createElement('script');
+                    sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js';
+                    sc.onload = resolve;
+                    sc.onerror = reject;
+                    document.head.appendChild(sc);
+                }).catch(() => {});
+            }
+            if (window.ZXing && window.ZXing.BrowserMultiFormatReader) {
+                document.getElementById('barcodeStatus').textContent = 'Point camera at a barcode…';
+                const reader = new window.ZXing.BrowserMultiFormatReader();
+                try {
+                    await reader.decodeFromVideoDevice(undefined, video, (result, err) => {
+                        if (result) {
+                            const code = result.getText();
+                            document.getElementById('barcodeStatus').textContent = 'Found: ' + code;
+                            reader.reset();
+                            stopBarcodeCamera();
+                            lookupBarcode(code);
+                        }
+                    });
                 } catch (e) {
-                    document.getElementById('barcodeStatus').textContent = 'Camera unavailable. Enter barcode manually.';
+                    document.getElementById('barcodeStatus').textContent = 'Scanner failed. Enter barcode manually.';
                 }
             } else {
-                document.getElementById('barcodeStatus').textContent = 'Camera scanning not supported in this browser. Enter barcode manually.';
+                document.getElementById('barcodeStatus').textContent = 'Camera scanning not supported here. Enter barcode manually.';
             }
         }
         function stopBarcodeCamera() {
@@ -209,7 +243,7 @@
             stopBarcodeCamera();
             document.getElementById('barcodeModal').classList.remove('open');
         }
-        async function lookupBarcode(code) {
+async function lookupBarcode(code) {
             code = (code || '').trim();
             if (!code) { showToast('Enter a barcode.'); return; }
             try {
