@@ -467,21 +467,9 @@ async function lookupBarcode(code) {
                         <span>I agree to the <a href="#" onclick="openLegal('terms');return false;">Terms of Service</a> and <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a>.</span>
                     </label>
                 </div>
-                <div class="field">
-                    <label class="flex items-start gap-2 text-xs">
-                        <input type="checkbox" id="signupAgeConfirm" required>
-                        <span>I am at least 13 years old (or have parental consent).</span>
-                    </label>
-                </div>
-                <div class="field">
-                    <label class="flex items-start gap-2 text-xs">
-                        <input type="checkbox" id="signupMarketingConsent">
-                        <span>I consent to receive marketing emails (optional).</span>
-                    </label>
-                </div>
                 <button type="button" onclick="handleSignup(event)" class="btn btn-primary" style="width:100%;">Create account</button>
             </form>
-            <p class="auth-note">Accounts are stored on this device. No cloud sync.</p>
+            
         </div>
     </div>
     <div id="appShell" class="hidden">
@@ -1379,12 +1367,10 @@ const ALL_FOOD_DB=DEFAULT_FOOD_DB.concat(GENERATED_FOOD_DB);
                 const p = document.getElementById('signupPass').value;
                 const p2 = document.getElementById('signupPass2').value;
                 const acceptTerms = document.getElementById('signupAcceptTerms');
-                const ageConfirm = document.getElementById('signupAgeConfirm');
                 if (!acceptTerms || !acceptTerms.checked) { showToast('You must accept the Terms and Privacy Policy.'); return; }
-                if (!ageConfirm || !ageConfirm.checked) { showToast('You must confirm you are at least 13 years old.'); return; }
-                const marketingEl = document.getElementById('signupMarketingConsent');
-                const marketingConsent = !!(marketingEl && marketingEl.checked);
+                if (p.length < 6 || p.length > 12) { showToast('Password must be 6-12 characters.'); return; }
                 if (p !== p2) { showToast('Passwords do not match.'); return; }
+                if (!email || !email.includes('@') || !email.toLowerCase().endsWith('.com')) { showToast('Please enter a valid email (e.g. name@gmail.com).'); return; }
                 const users = getUsers();
                 if (users[u]) { showToast('Username taken.'); return; }
                 users[u] = hashPass(p);
@@ -1396,7 +1382,7 @@ const ALL_FOOD_DB=DEFAULT_FOOD_DB.concat(GENERATED_FOOD_DB);
                         localStorage.setItem('nutri_user_emails', JSON.stringify(emails));
                     } catch (err) {}
                 }
-                localStorage.setItem('nutri_terms_accepted', JSON.stringify({ version: '2026-01', timestamp: new Date().toISOString(), marketing: marketingConsent }));
+                localStorage.setItem('nutri_terms_accepted', JSON.stringify({ version: '2026-01', timestamp: new Date().toISOString() }));
                 localStorage.setItem('nutri_current_user', u);
                 enterApp();
             } catch (err) {
