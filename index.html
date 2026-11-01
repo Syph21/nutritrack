@@ -441,6 +441,9 @@ async function lookupBarcode(code) {
                 </div>
                 <p id="loginError" class="text-xs text-danger mt-1 hidden">Invalid username or password.</p>
                 <button type="button" onclick="handleLogin(event)" class="btn btn-primary" style="width:100%;">Log in</button>
+                <p class="text-xs text-muted" style="text-align:center;margin-top:8px;">
+                    By logging in you agree to the <a href="#" onclick="openLegal('terms');return false;" style="font-weight:700;text-decoration:underline;">Terms of Service</a> and <a href="#" onclick="openLegal('privacy');return false;" style="font-weight:700;text-decoration:underline;">Privacy Policy</a>.
+                </p>
             </form>
             <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-3 hidden">
                 <div class="field"><label>Username</label><input type="text" id="signupUser" required></div>
